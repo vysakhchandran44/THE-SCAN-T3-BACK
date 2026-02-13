@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- PWA Theme - Light -->
+  <meta name="theme-color" content="#FFFFFF">
+  
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BOOTS PHARMACY">
+  
+  <title>BOOTS PHARMACY – Backwall Tracker</title>
+  
+  <!-- Manifest + Icons -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Barcode Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  
+  <!-- Pre-loaded Master Data (18,124 products) -->
+  <script src="master-data.js"></script>
+  
+  <style>
+    /* ========================================
+       LIGHT THEME - Clean & Modern
+       ======================================== */
+    :root {
+      /* Light Backgrounds */
+      --bg-main: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-surface: #F1F5F9;
+      --bg-elevated: #E2E8F0;
+      --bg-hover: #CBD5E1;
+      
+      /* Accent Colors - Coral/Teal/Yellow */
+      --coral: #FF6B6B;
+      --coral-light: #FEE2E2;
+      --coral-dark: #DC2626;
+      
+      --teal: #14B8A6;
+      --teal-light: #CCFBF1;
+      --teal-dark: #0D9488;
+      
+      --yellow: #F59E0B;
+      --yellow-light: #FEF3C7;
+      
+      --blue: #3B82F6;
+      --blue-light: #DBEAFE;
+      
+      /* Primary Accent */
+      --accent-primary: var(--teal);
+      --accent-primary-hover: var(--teal-dark);
+      --accent-secondary: var(--coral);
+      
+      /* Borders */
+      --border-light: #E2E8F0;
+      --border-default: #CBD5E1;
+      --border-strong: #94A3B8;
+      
+      /* Text Colors */
+      --text-primary: #1E293B;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --text-accent: var(--teal-dark);
+      
+      /* Status Colors */
+      --success: #10B981;
+      --success-bg: #D1FAE5;
+      --success-border: #6EE7B7;
+      --warning: #F59E0B;
+      --warning-bg: #FEF3C7;
+      --warning-border: #FCD34D;
+      --danger: #EF4444;
+      --danger-bg: #FEE2E2;
+      --danger-border: #FCA5A5;
+      
+      /* Typography */
+      --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      /* Spacing */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      
+      /* Borders */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-full: 9999px;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+      
+      /* Transitions */
+      --transition-fast: 150ms ease;
+      --transition-default: 250ms ease;
+      
+      /* Layout */
+      --header-height: 60px;
+      --nav-height: 70px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* ========================================
+       RESET & BASE
+       ======================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: var(--radius-full); }
+
+    /* ========================================
+       APP SHELL
+       ======================================== */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg-main);
+    }
+
+    /* Header */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      height: var(--header-height);
+      padding-top: var(--safe-top);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #1a4a8d;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .logo-branch {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .header-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      border: none;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+
+    .header-btn:active {
+      background: var(--bg-elevated);
+      transform: scale(0.95);
+    }
+
+    .online-status {
+      font-size: 0.65rem;
+      padding: 4px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+
+    .online-status.online {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .online-status.offline {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    /* Main Content */
+    .app-main {
+      flex: 1;
+      padding-top: calc(var(--header-height) + var(--safe-top));
+      padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + var(--space-md));
+      overflow-y: auto;
+    }
+
+    /* Page */
+    .page {
+      display: none;
+      padding: var(--space-md);
+      animation: fadeIn 0.2s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      height: var(--nav-height);
+      padding-bottom: var(--safe-bottom);
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: none;
+      background: transparent;
+    }
+
+    .nav-item.active {
+      color: var(--accent-primary);
+    }
+
+    .nav-item:active {
+      background: var(--bg-surface);
+    }
+
+    .nav-icon {
+      font-size: 1.4rem;
+    }
+
+    .nav-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* ========================================
+       CARDS & COMPONENTS
+       ======================================== */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .btn-primary:active {
+      background: var(--accent-primary-hover);
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-default);
+    }
+
+    .btn-secondary:active {
+      background: var(--bg-elevated);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-coral {
+      background: var(--coral);
+      color: white;
+    }
+
+    .btn-large {
+      padding: var(--space-md) var(--space-lg);
+      font-size: 1rem;
+      border-radius: var(--radius-lg);
+      width: 100%;
+    }
+
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      font-size: 1.2rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: var(--space-md);
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: var(--space-xs);
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-family: var(--font-mono);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      transition: all var(--transition-fast);
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--teal-light);
+    }
+
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* ========================================
+       HOME PAGE
+       ======================================== */
+    .hero {
+      text-align: center;
+      padding: var(--space-xl) var(--space-md);
+      background: linear-gradient(135deg, var(--teal-light) 0%, var(--coral-light) 100%);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--space-lg);
+    }
+
+    .hero-icon {
+      font-size: 3rem;
+      margin-bottom: var(--space-md);
+    }
+
+    .hero-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+    }
+
+    .hero-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+
+    .quick-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-lg);
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .quick-action:active {
+      transform: scale(0.98);
+      background: var(--bg-surface);
+    }
+
+    .quick-action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .quick-action-icon.coral { background: var(--coral-light); }
+    .quick-action-icon.teal { background: var(--teal-light); }
+    .quick-action-icon.yellow { background: var(--yellow-light); }
+    .quick-action-icon.blue { background: var(--blue-light); }
+
+    .quick-action-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: var(--space-md);
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Recent Items */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-link {
+      font-size: 0.8rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ========================================
+       SCANNER PAGE
+       ======================================== */
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--bg-surface);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: var(--space-md);
+      border: 2px solid var(--border-default);
+    }
+
+    #reader {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #reader video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: var(--radius-lg);
+    }
+
+    #reader__dashboard_section,
+    #reader__camera_selection,
+    #html5-qrcode-button-camera-permission,
+    #reader__dashboard_section_csr,
+    #reader__dashboard_section_swaplink {
+      display: none !important;
+    }
+
+    .scanner-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .scanner-frame {
+      width: 70%;
+      aspect-ratio: 1;
+      border: 3px solid var(--accent-primary);
+      border-radius: var(--radius-lg);
+      position: relative;
+    }
+
+    .scanner-frame::before,
+    .scanner-frame::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: var(--coral);
+      border-style: solid;
+    }
+
+    .scanner-frame::before {
+      top: -3px;
+      left: -3px;
+      border-width: 4px 0 0 4px;
+      border-radius: var(--radius-sm) 0 0 0;
+    }
+
+    .scanner-frame::after {
+      bottom: -3px;
+      right: -3px;
+      border-width: 0 4px 4px 0;
+      border-radius: 0 0 var(--radius-sm) 0;
+    }
+
+    .scanner-hint {
+      position: absolute;
+      bottom: var(--space-lg);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .scanner-controls {
+      display: flex;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .scanner-controls .btn {
+      flex: 1;
+    }
+
+    /* Scanned Result Display */
+    .scan-result {
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+      display: none;
+    }
+
+    .scan-result.show {
+      display: block;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .scan-result-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    .scan-result-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--success);
+      color: white;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .scan-result-title {
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    .scan-result-data {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      padding: var(--space-sm);
+      border-radius: var(--radius-sm);
+      word-break: break-all;
+    }
+
+    /* Manual Entry Section */
+    .manual-entry {
+      margin-top: var(--space-md);
+    }
+
+    .manual-entry-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    /* ========================================
+       HISTORY PAGE
+       ======================================== */
+    .search-bar {
+      display: flex;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .search-input {
+      flex: 1;
+      padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-full);
+      font-size: 0.9rem;
+      background: var(--bg-card);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+      overflow-x: auto;
+      padding-bottom: var(--space-xs);
+    }
+
+    .filter-tab {
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid var(--border-default);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-tab.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: white;
+    }
+
+    /* History Item */
+    .history-item {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      padding: var(--space-md);
+      margin-bottom: var(--space-sm);
+      position: relative;
+      transition: all var(--transition-fast);
+    }
+
+    .history-item.expired {
+      border-left: 4px solid var(--danger);
+    }
+
+    .history-item.expired .item-name {
+      text-decoration: line-through;
+      color: var(--danger);
+    }
+
+    .history-item.expiring {
+      border-left: 4px solid var(--warning);
+    }
+
+    .history-item.ok {
+      border-left: 4px solid var(--success);
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-sm);
+    }
+
+    .item-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      flex: 1;
+      margin-right: var(--space-sm);
+    }
+
+    .item-qty {
+      background: var(--accent-primary);
+      color: white;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .item-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-xs);
+      font-size: 0.75rem;
+    }
+
+    .item-detail {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .item-detail-label {
+      color: var(--text-muted);
+    }
+
+    .item-detail-value {
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .item-expiry {
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .item-expiry.expired {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .item-expiry.expiring {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .item-expiry.ok {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .item-actions {
+      display: flex;
+      gap: var(--space-xs);
+      margin-top: var(--space-sm);
+      padding-top: var(--space-sm);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .item-action-btn {
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--radius-sm);
+      font-size: 0.7rem;
+      font-weight: 600;
+      border: 1px solid var(--border-default);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .item-action-btn:active {
+      background: var(--bg-elevated);
+    }
+
+    .item-action-btn.delete {
+      color: var(--danger);
+      border-color: var(--danger-border);
+    }
+
+    /* Unknown Product - needs name update */
+    .history-item.unknown-product {
+      border: 2px dashed var(--warning);
+      background: var(--yellow-light);
+    }
+
+    .item-name.needs-update {
+      color: var(--warning);
+      font-style: italic;
+    }
+
+    .item-action-btn.highlight {
+      background: var(--warning);
+      color: white;
+      border-color: var(--warning);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: var(--space-2xl);
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: var(--space-md);
+    }
+
+    .empty-state-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: var(--space-sm);
+    }
+
+    /* ========================================
+       PASTE PAGE (Manual Entry)
+       ======================================== */
+    .paste-info {
+      background: var(--blue-light);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+    }
+
+    .paste-info-title {
+      font-weight: 600;
+      color: var(--blue);
+      margin-bottom: var(--space-xs);
+    }
+
+    .paste-info-text {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* ========================================
+       MASTER/SETTINGS PAGE
+       ======================================== */
+    .settings-section {
+      margin-bottom: var(--space-lg);
+    }
+
+    .settings-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: var(--space-sm);
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-xs);
+      cursor: pointer;
+      border: 1px solid var(--border-light);
+      transition: all var(--transition-fast);
+    }
+
+    .menu-item:active {
+      background: var(--bg-surface);
+    }
+
+    .menu-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+    }
+
+    .menu-item-icon.coral { background: var(--coral-light); color: var(--coral); }
+    .menu-item-icon.teal { background: var(--teal-light); color: var(--teal); }
+    .menu-item-icon.yellow { background: var(--yellow-light); color: var(--yellow); }
+    .menu-item-icon.blue { background: var(--blue-light); color: var(--blue); }
+    .menu-item-icon.danger { background: var(--danger-bg); color: var(--danger); }
+
+    .menu-item-content {
+      flex: 1;
+    }
+
+    .menu-item-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .menu-item-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .menu-item-arrow {
+      color: var(--text-muted);
+    }
+
+    .menu-item.danger .menu-item-title {
+      color: var(--danger);
+    }
+
+    /* Master Data Stats */
+    .master-stats {
+      display: flex;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--teal-light);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-md);
+    }
+
+    .master-stat {
+      text-align: center;
+      flex: 1;
+    }
+
+    .master-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--teal-dark);
+    }
+
+    .master-stat-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    /* ========================================
+       TOAST NOTIFICATIONS
+       ======================================== */
+    .toast-container {
+      position: fixed;
+      top: calc(var(--header-height) + var(--safe-top) + var(--space-md));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      width: calc(100% - var(--space-lg));
+      max-width: 400px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--text-primary);
+      color: white;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      animation: toastIn 0.3s ease;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .toast.success {
+      background: var(--success);
+    }
+
+    .toast.error {
+      background: var(--danger);
+    }
+
+    .toast.warning {
+      background: var(--warning);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ========================================
+       LOADING
+       ======================================== */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border-default);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ========================================
+       EDIT MODAL
+       ======================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1500;
+      padding: var(--space-md);
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 360px;
+      padding: var(--space-lg);
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-md);
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--bg-surface);
+      border-radius: var(--radius-sm);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+    }
+
+    /* Hidden file inputs */
+    .hidden-input {
+      display: none;
+    }
+
+    /* Footer */
+    .app-footer {
+      text-align: center;
+      padding: var(--space-lg);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .app-footer strong {
+      color: var(--text-secondary);
+    }
+
+    /* Side Menu */
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: all var(--transition-default);
+    }
+
+    .menu-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .side-menu {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100%;
+      background: var(--bg-card);
+      z-index: 201;
+      transition: right var(--transition-default);
+      padding: var(--space-lg);
+      padding-top: calc(var(--safe-top) + var(--space-lg));
+      overflow-y: auto;
+    }
+
+    .side-menu.show {
+      right: 0;
+    }
+
+    .side-menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-md);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .side-menu-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .side-menu-close {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <div class="logo-icon"><img src="boots-logo.png" alt="Boots" style="width:100%;height:100%;object-fit:contain;border-radius:8px;"></div>
+        <div class="logo-text">
+          <span class="logo-name">BOOTS PHARMACY</span>
+          <span class="logo-branch">Oasis Mall Branch - Backwall Tracker</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="online-status online" id="onlineStatus">● Online</span>
+        <button class="header-btn" id="btnMenu">☰</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      <!-- HOME PAGE -->
+      <div class="page active" id="page-home">
+        <div class="hero">
+          <div class="hero-icon">📦</div>
+          <h1 class="hero-title">Backwall Tracker</h1>
+          <p class="hero-subtitle">Scan barcode and manual entry for expiry tracking</p>
+        </div>
+
+        <div class="quick-actions">
+          <div class="quick-action" data-page="scan">
+            <div class="quick-action-icon coral">📷</div>
+            <span class="quick-action-label">Scan Barcode</span>
+          </div>
+          <div class="quick-action" data-page="paste">
+            <div class="quick-action-icon teal">⌨️</div>
+            <span class="quick-action-label">Manual Entry</span>
+          </div>
+          <div class="quick-action" data-page="history">
+            <div class="quick-action-icon yellow">📋</div>
+            <span class="quick-action-label">View History</span>
+          </div>
+          <div class="quick-action" data-page="master">
+            <div class="quick-action-icon blue">⚙️</div>
+            <span class="quick-action-label">Settings</span>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Total Items</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="statExpiring" style="color: var(--warning);">0</div>
+            <div class="stat-label">Expiring Soon</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="statExpired" style="color: var(--danger);">0</div>
+            <div class="stat-label">Expired</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <span class="section-title">Recent Scans</span>
+          <span class="section-link" data-page="history">View All →</span>
+        </div>
+        <div id="recentItems"></div>
+
+        <div class="app-footer">
+          <p>Made by <strong>Vysakh Chandran</strong></p>
+        </div>
+      </div>
+
+      <!-- SCAN PAGE -->
+      <div class="page" id="page-scan">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📷 Barcode Scanner</span>
+          </div>
+          
+          <div class="scanner-container" id="scannerContainer">
+            <div id="reader"></div>
+            <div class="scanner-overlay" id="scannerOverlay">
+              <div class="scanner-frame"></div>
+              <span class="scanner-hint">Position barcode in frame</span>
+            </div>
+          </div>
+
+          <div class="scanner-controls">
+            <button class="btn btn-primary" id="btnStartScanner">▶️ Start Scanner</button>
+            <button class="btn btn-secondary btn-icon" id="btnSwitchCamera" title="Switch Camera">🔄</button>
+            <button class="btn btn-secondary btn-icon" id="btnUploadImage" title="Upload Image">🖼️</button>
+          </div>
+
+          <!-- Scan Result Display -->
+          <div class="scan-result" id="scanResult">
+            <div class="scan-result-header">
+              <div class="scan-result-icon">✓</div>
+              <span class="scan-result-title">Barcode Detected!</span>
+            </div>
+            <div class="scan-result-data" id="scanResultData"></div>
+          </div>
+
+          <!-- Manual Entry Below Scanner -->
+          <div class="manual-entry">
+            <div class="manual-entry-title">
+              <span>⌨️ Manual / Scanned Data</span>
+            </div>
+            <div class="form-group">
+              <textarea class="form-textarea" id="scanManualInput" placeholder="Scanned barcode will appear here...&#10;Or paste/type GS1 data manually&#10;&#10;Example:&#10;01095011015300031714013110K24P001"></textarea>
+            </div>
+            <button class="btn btn-primary btn-large" id="btnProcessManual">Process Data</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY PAGE -->
+      <div class="page" id="page-history">
+        <div class="search-bar">
+          <input type="text" class="search-input" id="searchHistory" placeholder="🔍 Search products...">
+        </div>
+
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="expired">Expired</button>
+          <button class="filter-tab" data-filter="expiring">Expiring</button>
+          <button class="filter-tab" data-filter="ok">OK</button>
+        </div>
+
+        <div id="historyList"></div>
+      </div>
+
+      <!-- PASTE PAGE (Manual Entry) -->
+      <div class="page" id="page-paste">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">⌨️ Manual Entry</span>
+          </div>
+
+          <div class="paste-info">
+            <div class="paste-info-title">💡 Tip</div>
+            <div class="paste-info-text">
+              Paste multiple barcodes, one per line. Supports GS1, EAN-13, GTIN-14, and plain barcodes.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Paste Barcode Data</label>
+            <textarea class="form-textarea" id="pasteInput" rows="8" placeholder="Paste barcodes here...&#10;One per line&#10;&#10;Example:&#10;01095011015300031714013110K24P001&#10;5000167393170&#10;6297000001234"></textarea>
+          </div>
+
+          <button class="btn btn-primary btn-large" id="btnProcessPaste">
+            ⚡ Process All
+          </button>
+        </div>
+      </div>
+
+      <!-- MASTER/SETTINGS PAGE -->
+      <div class="page" id="page-master">
+        <div class="master-stats">
+          <div class="master-stat">
+            <div class="master-stat-value" id="masterCount">0</div>
+            <div class="master-stat-label">Products in Database</div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title">Master Data</div>
+          
+          <div class="menu-item" id="btnViewMaster">
+            <div class="menu-item-icon blue">👁️</div>
+            <div class="menu-item-content">
+              <div class="menu-item-title">View Master Database</div>
+              <div class="menu-item-subtitle">Search and edit products</div>
+            </div>
+            <span class="menu-item-arrow">→</span>
+          </div>
+          
+          <div class="menu-item" id="btnUploadMaster">
+            <div class="menu-item-icon teal">📤</div>
+            <div class="menu-item-content">
+              <div class="menu-item-title">Upload Master File</div>
+              <div class="menu-item-subtitle">Replace entire product database</div>
+            </div>
+            <span class="menu-item-arrow">→</span>
+          </div>
+
+          <div class="menu-item" id="btnAppendMaster">
+            <div class="menu-item-icon blue">➕</div>
+            <div class="menu-item-content">
+              <div class="menu-item-title">Append to Master</div>
+              <div class="menu-item-subtitle">Add new products without removing existing</div>
+            </div>
+            <span class="menu-item-arrow">→</span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title">Export Data</div>
+          
+          <div class="menu-item" id="btnExportCSV">
+            <div class="menu-item-icon coral">📊</div>
+            <div class="menu-item-content">
+              <div class="menu-item-title">Export History (CSV)</div>
+              <div class="menu-item-subtitle">Download scan history as CSV file</div>
+            </div>
+            <span class="menu-item-arrow">→</span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title">Backup & Restore</div>
+          
+          <div class="menu-item" id="btnBackup">
+            <div class="menu-item-icon yellow">💾</div>
+            <div class="menu-item-content">
+              <div class="menu-item-title">Download Backup</div>
+              <div class="menu-item-subtitle">Save all data as JSON file</div>
+            </div>
+            <span class="menu-item-arrow">→</span>
+          </div>
+
+          <div class="menu-item" id="btnRestore">
+            <div class="menu-item-icon blue">📥</div>
+            <div class="menu-item-content">
+              <div class="menu-item-title">Restore Backup</div>
+              <div class="menu-item-subtitle">Load data from backup file</div>
+            </div>
+            <span class="menu-item-arrow">→</span>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title">Danger Zone</div>
+          
+          <div class="menu-item danger" id="btnClearHistory">
+            <div class="menu-item-icon danger">🗑️</div>
+            <div class="menu-item-content">
+              <div class="menu-item-title">Clear All History</div>
+              <div class="menu-item-subtitle">This cannot be undone</div>
+            </div>
+            <span class="menu-item-arrow">→</span>
+          </div>
+        </div>
+
+        <div class="app-footer">
+          <p>Version 4.0.0</p>
+          <p>Made by <strong>Vysakh Chandran</strong></p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-page="home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-item" data-page="scan">
+        <span class="nav-icon">📷</span>
+        <span class="nav-label">Scan</span>
+      </button>
+      <button class="nav-item" data-page="history">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">History</span>
+      </button>
+      <button class="nav-item" data-page="paste">
+        <span class="nav-icon">⌨️</span>
+        <span class="nav-label">Manual</span>
+      </button>
+      <button class="nav-item" data-page="master">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Edit Modal - Full Featured -->
+  <div class="modal-backdrop" id="editModal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ Add/Edit Product</h3>
+        <button class="modal-close" id="closeEditModal">×</button>
+      </div>
+      
+      <!-- Show Barcode Info -->
+      <div class="barcode-info" id="editBarcodeInfo" style="background: var(--blue-light); padding: 10px; border-radius: 8px; margin-bottom: 16px; font-family: var(--font-mono); font-size: 0.8rem;">
+        <div><strong>Barcode:</strong> <span id="editBarcodeDisplay">-</span></div>
+        <div><strong>GTIN-14:</strong> <span id="editGtin14Display">-</span></div>
+        <div><strong>Scanned:</strong> <span id="editTimestampDisplay">-</span></div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Product Name *</label>
+        <input type="text" class="form-input edit-field" id="editName" placeholder="Enter product name" data-next="editBatch">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Batch Number</label>
+        <input type="text" class="form-input edit-field" id="editBatch" placeholder="Batch number" data-next="editExpiry">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Expiry Date</label>
+        <input type="date" class="form-input edit-field" id="editExpiry" data-next="editQty">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <input type="number" class="form-input edit-field" id="editQty" min="1" value="1" data-next="editRms">
+      </div>
+      <div class="form-group">
+        <label class="form-label">RMS Code</label>
+        <input type="text" class="form-input edit-field" id="editRms" placeholder="RMS code" data-next="editName">
+      </div>
+      
+      <!-- Photo Section -->
+      <div class="form-group">
+        <label class="form-label">Photo (Optional)</label>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-secondary" id="btnTakePhoto" style="flex:1;">📷 Take Photo</button>
+          <div id="photoPreview" style="width:60px;height:60px;border:1px solid var(--border-default);border-radius:8px;overflow:hidden;display:none;">
+            <img id="photoImg" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+      </div>
+      
+      <input type="hidden" id="editItemId">
+      <input type="hidden" id="editPhoto">
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="cancelEdit">Cancel</button>
+        <button class="btn btn-primary" id="saveEdit">💾 Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Master Data Viewer Modal -->
+  <div class="modal-backdrop" id="masterViewModal">
+    <div class="modal-content" style="max-width: 450px; max-height: 80vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3 class="modal-title">📦 Master Database</h3>
+        <button class="modal-close" id="closeMasterView">×</button>
+      </div>
+      
+      <div style="margin-bottom: 12px;">
+        <input type="text" class="form-input" id="masterSearchInput" placeholder="🔍 Search by barcode, name, or RMS...">
+      </div>
+      
+      <div id="masterListContainer" style="flex:1; overflow-y:auto; max-height: 400px;">
+        <!-- Master items will be rendered here -->
+      </div>
+      
+      <div class="modal-actions" style="margin-top: 12px;">
+        <button class="btn btn-secondary" id="closeMasterViewBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side Menu -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <div class="side-menu" id="sideMenu">
+    <div class="side-menu-header">
+      <span class="side-menu-title">Menu</span>
+      <button class="side-menu-close" id="closeSideMenu">×</button>
+    </div>
+    
+    <div class="settings-section">
+      <div class="settings-title">Quick Actions</div>
+      <div class="menu-item" data-page="scan">
+        <div class="menu-item-icon coral">📷</div>
+        <div class="menu-item-content">
+          <div class="menu-item-title">Scan Barcode</div>
+        </div>
+      </div>
+      <div class="menu-item" data-page="paste">
+        <div class="menu-item-icon teal">⌨️</div>
+        <div class="menu-item-content">
+          <div class="menu-item-title">Manual Entry</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-title">Data</div>
+      <div class="menu-item" id="menuExport">
+        <div class="menu-item-icon coral">📊</div>
+        <div class="menu-item-content">
+          <div class="menu-item-title">Export CSV</div>
+        </div>
+      </div>
+      <div class="menu-item" id="menuBackup">
+        <div class="menu-item-icon yellow">💾</div>
+        <div class="menu-item-content">
+          <div class="menu-item-title">Backup</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden File Inputs -->
+  <input type="file" class="hidden-input" id="fileInputMaster" accept=".csv,.tsv,.txt,.xlsx,.xls">
+  <input type="file" class="hidden-input" id="fileInputAppend" accept=".csv,.tsv,.txt,.xlsx,.xls">
+  <input type="file" class="hidden-input" id="fileInputRestore" accept=".json">
+  <input type="file" class="hidden-input" id="fileInputImage" accept="image/*">
+
+  <script src="app.js"></script>
+</body>
+</html>
