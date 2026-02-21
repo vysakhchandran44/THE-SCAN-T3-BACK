@@ -1,31 +1,67 @@
-// sw.js – Service Worker for Expiry Tracker PWA
-const CACHE_NAME = 'expiry-tracker-v1';
-const ASSETS = [
+const CACHE_VERSION = 'v3.0.0';
+const CACHE_NAME = `oasis-pharmacy-${CACHE_VERSION}`;
+
+const STATIC_FILES = [
   './',
   './index.html',
   './app.js',
-  './db.js',
   './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+const API_DOMAINS = [
+  'api.fda.gov',
+  'dailymed.nlm.nih.gov',
+  'rxnav.nlm.nih.gov',
+  'openfoodfacts.org'
+];
+
+// Install
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(STATIC_FILES))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+// Activate
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(key => key.startsWith('oasis-pharmacy-') && key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+// Fetch
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  
+  // API requests - network only
+  if (API_DOMAINS.some(domain => url.hostname.includes(domain))) {
+    event.respondWith(fetch(event.request).catch(() => new Response('{"error":"offline"}', { status: 503 })));
+    return;
+  }
+  
+  // Static files - cache first
+  event.respondWith(
+    caches.match(event.request)
+      .then(cached => {
+        if (cached) return cached;
+        return fetch(event.request)
+          .then(response => {
+            if (response.ok && event.request.method === 'GET') {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            }
+            return response;
+          });
+      })
+      .catch(() => caches.match('./index.html'))
   );
 });
